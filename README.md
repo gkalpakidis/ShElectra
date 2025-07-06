@@ -17,7 +17,7 @@ You will find commands and functions similar to Electra.
 
 2. cd to the project directory
    ```bash
-     cd Electra
+     cd ShElectra
    ```
 
 3. Execute commands using the script
