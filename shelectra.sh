@@ -34,23 +34,41 @@ show_help() {
 
 #CDIR
 cdir() {
-    local name=$1
-    local path=$2
+    local name=""
+    local path=""
 
-    if [[ "$(uname)" != "Linux" ]]; then
-        echo -e "${RED}[!] This function is only supported on Linux systems.${NC}"
+    #Parse options using getopts
+    while getopts ":n:p:-:" opt; do
+        case "${opt}" in
+            n) name="${OPTARG}" ;;
+            p) path="${OPTARG}" ;;
+            -)
+                case "${OPTARG}" in
+                    name) name="${!OPTIND}"; OPTIND=$((OPTIND + 1));;
+                    path) path="${!OPTIND}"; OPTIND=$((OPTIND + 1));;
+                    *) echo -e "${RED}[!] Unknown option: --${OPTARG}${NC}"; exit 1 ;;
+                esac
+                ;;
+            \?) echo -e "${RED}[!] Invalid option: -$OPTARG${NC}"; exit 1 ;;
+            :) echo -e "${RED}[!] Option -$OPTARG requires an argument.${NC}"; exit 1 ;;
+        esac
+    done
+    shift $((OPTIND -1))
+
+    if [[ -z "$name" ]]; then
+        echo -e "${RED}[!] Directory name is required. Use -n <name>${NC}"
         exit 1
     fi
 
     if [[ -z "$path" ]]; then
         path=$(pwd)
-        echo -e "${YELLOW}[!] No path specified. Using current directory: $path${NC}"
+        echo -e "${YELLOW}[*] No path specified. Using current directory: $path${NC}"
     fi
 
     local full_path="$path/$name"
 
     if mkdir -p "$full_path" 2>/dev/null; then
-        echo -e "${GREEN}[!] Directory: '$name' created successfully at $full_path${NC}"
+        echo -e "${GREEN}[!] Directory: '$name' successfully created at $full_path${NC}"
     else
         echo -e "${RED}[!] Error: Permission denied or directory already exists.${NC}"
     fi
@@ -60,25 +78,7 @@ cdir() {
 case "$1" in
     cdir)
         shift
-        name="Directory"
-        path=""
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                -n|--name)
-                    name="$2"
-                    shift 2
-                    ;;
-                -p|--path)
-                    path="$2"
-                    shift 2
-                    ;;
-                *)
-                    echo -e "${RED}[!] Unknown option: $1${NC}"
-                    exit 1
-                    ;;
-            esac
-        done
-        cdir "$name" "$path"
+        cdir "$@"
         ;;
     help|-h|--help|"")
         show_help
